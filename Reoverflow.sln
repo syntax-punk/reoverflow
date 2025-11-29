@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reoverflow.AppHost", "Reoverflow.AppHost\Reoverflow.AppHost.csproj", "{D1086C8A-D5BC-4190-835D-0CCCF283470A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reoverflow.ServiceDefaults", "Reoverflow.ServiceDefaults\Reoverflow.ServiceDefaults.csproj", "{B02D09ED-5C05-4297-A0AC-3B1B5D000B3D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D1086C8A-D5BC-4190-835D-0CCCF283470A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1086C8A-D5BC-4190-835D-0CCCF283470A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1086C8A-D5BC-4190-835D-0CCCF283470A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1086C8A-D5BC-4190-835D-0CCCF283470A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B02D09ED-5C05-4297-A0AC-3B1B5D000B3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B02D09ED-5C05-4297-A0AC-3B1B5D000B3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B02D09ED-5C05-4297-A0AC-3B1B5D000B3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B02D09ED-5C05-4297-A0AC-3B1B5D000B3D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
