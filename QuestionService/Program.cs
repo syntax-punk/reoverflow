@@ -1,3 +1,5 @@
+using QuestionService.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -11,6 +13,7 @@ builder.Services.AddAuthentication()
         options.RequireHttpsMetadata = false;
         options.Audience = "reoverflow";
     });
+builder.AddNpgsqlDbContext<QuestionDbContext>("questionDb");
 
 var app = builder.Build();
 
