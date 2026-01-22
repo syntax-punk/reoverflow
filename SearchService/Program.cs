@@ -1,3 +1,5 @@
+using SearchService.Data;
+using Typesense;
 using Typesense.Setup;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,4 +36,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapDefaultEndpoints();
+
+using var scope = app.Services.CreateScope();
+var client = scope.ServiceProvider.GetRequiredService<ITypesenseClient>();
+await SearchInitializer.EnsureIndexExists(client);
+
 app.Run();
