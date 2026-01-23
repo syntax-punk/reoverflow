@@ -2,7 +2,7 @@ using Typesense;
 
 namespace SearchService.Data;
 
-public static class SearchInitializer
+public static class SearchInitializer                                                       
 {
     public static async Task EnsureIndexExists(ITypesenseClient client)
     {
@@ -14,7 +14,7 @@ public static class SearchInitializer
             Console.WriteLine($"-> Collection {schemaName} was already created");
             return;
         }
-        catch (TypesenseApiNotFoundException e)
+        catch (TypesenseApiNotFoundException)
         {
             Console.WriteLine($"-> Collection {schemaName} has not been created yet");
         }

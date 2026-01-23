@@ -16,7 +16,6 @@ var typesenseApiKey = builder.Configuration["typesense-api-key"];
 if (string.IsNullOrEmpty(typesenseApiKey))
     throw new InvalidOperationException("Typesense API key is not defined");
 
-
 var uri = new Uri(typesenseUri);
 builder.Services.AddTypesenseClient(config =>
 {
