@@ -13,6 +13,14 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.AddServiceDefaults();
 
+builder.Services.AddAuthentication()
+    .AddKeycloakJwtBearer(serviceName: "keycloak", realm: "reoverflow", options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.Audience = "reoverflow";
+    });
+builder.AddNpgsqlDbContext<QuestionDbContext>("questionDb");
+
 builder.Services.AddOpenTelemetry().WithTracing(providerBuilder =>
 {
     providerBuilder.SetResourceBuilder(ResourceBuilder.CreateDefault()
@@ -23,19 +31,8 @@ builder.Services.AddOpenTelemetry().WithTracing(providerBuilder =>
 builder.Host.UseWolverine(opts =>
 {
     opts.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
-    opts.ListenToRabbitQueue("questions.search", cfg =>
-    {
-        cfg.BindExchange("questions");
-    });
+    opts.PublishAllMessages().ToRabbitExchange("questions");
 });
-
-builder.Services.AddAuthentication()
-    .AddKeycloakJwtBearer(serviceName: "keycloak", realm: "reoverflow", options =>
-    {
-        options.RequireHttpsMetadata = false;
-        options.Audience = "reoverflow";
-    });
-builder.AddNpgsqlDbContext<QuestionDbContext>("questionDb");
 
 var app = builder.Build();
 
