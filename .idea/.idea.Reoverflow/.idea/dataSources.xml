@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:postgresql://localhost:53984/?password=np*e*W%29W.r._qCSq5kU%7BWP&amp;user=postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="postgres" uuid="6ff6dc56-7c4f-48b4-be08-af7372d6fead">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:54150/?password=np*e*W%29W.r._qCSq5kU%7BWP&amp;user=postgres</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
