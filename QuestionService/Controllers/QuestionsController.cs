@@ -112,4 +112,34 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         
         return NoContent();
     }
+
+    [Authorize]
+    [HttpPost("{id}/answers")]
+    public async Task<ActionResult<Answer>> CreateAnswer(string id, CreateAnswerDto dto)
+    {
+        var question = await db.Questions.FindAsync(id);
+        if (question is null) return NotFound();
+        
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var name = User.FindFirstValue("name");
+
+        if (userId is null || name is null) return BadRequest("Cannot get user details");
+
+        var answer = new Answer()
+        {
+            Content = dto.Content,
+            QuestionId = question.Id,
+            Question =  question,
+            UserDisplayName =  name,
+            UserId = userId
+        };
+        
+        question.Answers.Add(answer);
+        question.AnswerCount = question.Answers.Count;
+        
+        db.Answers.Add(answer);
+        await db.SaveChangesAsync();
+        
+        return Created($"questions/{question.Id}", answer);
+    }
 }
