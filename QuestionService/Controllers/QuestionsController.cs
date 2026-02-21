@@ -114,10 +114,10 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     }
 
     [Authorize]
-    [HttpPost("{id}/answers")]
-    public async Task<ActionResult<Answer>> CreateAnswer(string id, CreateAnswerDto dto)
+    [HttpPost("{questionId}/answers")]
+    public async Task<ActionResult<Answer>> CreateAnswer(string questionId, CreateAnswerDto dto)
     {
-        var question = await db.Questions.FindAsync(id);
+        var question = await db.Questions.FindAsync(questionId);
         if (question is null) return NotFound();
         
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -141,5 +141,66 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         await db.SaveChangesAsync();
         
         return Created($"questions/{question.Id}", answer);
+    }
+
+    [Authorize]
+    [HttpPut("{questionId}/answers/{answerId}")]
+    public async Task<ActionResult> UpdateAnswer(string questionId, string answerId, CreateAnswerDto dto)
+    {
+        var question = await db.Questions.FindAsync(questionId);
+        if (question is null) return NotFound();
+        
+        var answer = await db.Answers.FindAsync(answerId);
+        if (answer is null) return NotFound();
+        if (answer.QuestionId != questionId) return Forbid();
+        
+        answer.Content = dto.Content;
+        answer.UpdatedAt = DateTime.UtcNow;
+        var questionAnswer = question.Answers.Find(a => a.Id.Equals(answerId));
+        questionAnswer?.Content = answer.Content;
+
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpDelete("{questionId}/answers/{answerId}")]
+    public async Task<ActionResult> DeleteAnswer(string questionId, string answerId)
+    {
+        var question = await db.Questions.FindAsync(questionId);
+        if (question is null) return NotFound();
+        
+        var answer = await db.Answers.FindAsync(answerId);
+        if (answer is null) return NotFound();
+        if (answer.QuestionId != questionId) return Forbid();
+        if (answer.Accepted) return BadRequest("You cannot delete accepted answer");
+        
+        db.Answers.Remove(answer);
+        question.Answers.Remove(answer);
+        
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("{questionId}/answers/{answerId}/accept")]
+    public async Task<ActionResult> AcceptAnswer(string questionId, string answerId)
+    {
+        var question = await db.Questions.FindAsync(questionId);
+        if (question is null) return NotFound();
+        
+        var answer = await db.Answers.FindAsync(answerId);
+        if (answer is null) return NotFound();
+        if (answer.QuestionId != questionId) return Forbid();
+        if (answer.Accepted) return BadRequest("This answer has already been accepted");
+        if (question.Answers.Any(a => a.Accepted))
+            return BadRequest("This question already has an accepted answer");
+        
+        answer.Accepted = true;
+        var questionAnswer = question.Answers.Find(a => a.Id.Equals(answerId));
+        questionAnswer?.Accepted = true;
+
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 }
