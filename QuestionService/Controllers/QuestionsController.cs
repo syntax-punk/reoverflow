@@ -75,7 +75,9 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateQuestion(string id, CreateQuestionDto dto)
     {
-        var question = await db.Questions.FindAsync(id);
+        var question = await db.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q =>  q.Id == id);
         if (question is null) return NotFound();
         
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -117,7 +119,9 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpPost("{questionId}/answers")]
     public async Task<ActionResult<Answer>> CreateAnswer(string questionId, CreateAnswerDto dto)
     {
-        var question = await db.Questions.FindAsync(questionId);
+        var question = await db.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
         if (question is null) return NotFound();
         
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -139,6 +143,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         
         db.Answers.Add(answer);
         await db.SaveChangesAsync();
+        await bus.PublishAsync(new AnswerCountUpdated(question.Id, question.Answers.Count));
         
         return Created($"questions/{question.Id}", answer);
     }
@@ -147,7 +152,9 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpPut("{questionId}/answers/{answerId}")]
     public async Task<ActionResult> UpdateAnswer(string questionId, string answerId, CreateAnswerDto dto)
     {
-        var question = await db.Questions.FindAsync(questionId);
+        var question = await db.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
         if (question is null) return NotFound();
         
         var answer = await db.Answers.FindAsync(answerId);
@@ -167,7 +174,9 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpDelete("{questionId}/answers/{answerId}")]
     public async Task<ActionResult> DeleteAnswer(string questionId, string answerId)
     {
-        var question = await db.Questions.FindAsync(questionId);
+        var question = await db.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
         if (question is null) return NotFound();
         
         var answer = await db.Answers.FindAsync(answerId);
@@ -179,6 +188,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         question.Answers.Remove(answer);
         
         await db.SaveChangesAsync();
+        await bus.PublishAsync(new AnswerCountUpdated(question.Id, question.Answers.Count));
         return NoContent();
     }
 
@@ -186,7 +196,9 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpPost("{questionId}/answers/{answerId}/accept")]
     public async Task<ActionResult> AcceptAnswer(string questionId, string answerId)
     {
-        var question = await db.Questions.FindAsync(questionId);
+        var question = await db.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
         if (question is null) return NotFound();
         
         var answer = await db.Answers.FindAsync(answerId);
@@ -201,6 +213,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         questionAnswer?.Accepted = true;
 
         await db.SaveChangesAsync();
+        await bus.PublishAsync(new AnswerAccepted(questionId));
         return NoContent();
     }
 }
