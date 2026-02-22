@@ -3,7 +3,7 @@ using Typesense;
 
 namespace SearchService.MessageHandlers;
 
-public class AnswerCountHandler(ITypesenseClient client)
+public class AnswerCountUpdatedHandler(ITypesenseClient client)
 {
     public async Task HandleAsync(AnswerCountUpdated message)
     {

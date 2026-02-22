@@ -62,7 +62,10 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpGet("{id}")]
     public async Task<ActionResult<Question>> GetQuestion(string id)
     {
-        var question = await db.Questions.FindAsync(id);
+        var question = await db.Questions
+            .Include(q => q.Answers)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        
         if (question is null) return NotFound();
 
         await db.Questions.Where(q => q.Id == id)
@@ -119,9 +122,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpPost("{questionId}/answers")]
     public async Task<ActionResult<Answer>> PostAnswer(string questionId, CreateAnswerDto dto)
     {
-        var question = await db.Questions
-            .Include(q => q.Answers)
-            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
+        var question = await db.Questions.FindAsync(questionId);
         if (question is null) return NotFound();
         
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -138,21 +139,19 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         };
         
         question.Answers.Add(answer);
-        question.AnswerCount = question.Answers.Count;
+        question.AnswerCount = question.AnswerCount++;
         
         await db.SaveChangesAsync();
-        await bus.PublishAsync(new AnswerCountUpdated(question.Id, question.Answers.Count));
+        await bus.PublishAsync(new AnswerCountUpdated(questionId, question.AnswerCount));
         
-        return Created($"questions/{question.Id}", answer);
+        return Created($"questions/{questionId}", answer);
     }
 
     [Authorize]
     [HttpPut("{questionId}/answers/{answerId}")]
     public async Task<ActionResult> UpdateAnswer(string questionId, string answerId, CreateAnswerDto dto)
     {
-        var question = await db.Questions
-            .Include(q => q.Answers)
-            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
+        var question = await db.Questions.FindAsync(questionId);
         if (question is null) return NotFound();
         
         var answer = await db.Answers.FindAsync(answerId);
@@ -161,8 +160,6 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         
         answer.Content = dto.Content;
         answer.UpdatedAt = DateTime.UtcNow;
-        var questionAnswer = question.Answers.Find(a => a.Id.Equals(answerId));
-        questionAnswer?.Content = answer.Content;
 
         await db.SaveChangesAsync();
         return NoContent();
@@ -172,9 +169,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpDelete("{questionId}/answers/{answerId}")]
     public async Task<ActionResult> DeleteAnswer(string questionId, string answerId)
     {
-        var question = await db.Questions
-            .Include(q => q.Answers)
-            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
+        var question = await db.Questions.FindAsync(questionId);
         if (question is null) return NotFound();
         
         var answer = await db.Answers.FindAsync(answerId);
@@ -183,10 +178,10 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         if (answer.Accepted) return BadRequest("You cannot delete accepted answer");
         
         db.Answers.Remove(answer);
-        question.Answers.Remove(answer);
+        question.AnswerCount--;
         
         await db.SaveChangesAsync();
-        await bus.PublishAsync(new AnswerCountUpdated(question.Id, question.Answers.Count));
+        await bus.PublishAsync(new AnswerCountUpdated(questionId, question.AnswerCount));
         return NoContent();
     }
 
@@ -194,21 +189,18 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpPost("{questionId}/answers/{answerId}/accept")]
     public async Task<ActionResult> AcceptAnswer(string questionId, string answerId)
     {
-        var question = await db.Questions
-            .Include(q => q.Answers)
-            .FirstOrDefaultAsync(q => q.Id.Equals(questionId));
+        var question = await db.Questions.FindAsync(questionId);
         if (question is null) return NotFound();
         
         var answer = await db.Answers.FindAsync(answerId);
         if (answer is null) return NotFound();
         if (answer.QuestionId != questionId) return Forbid();
         if (answer.Accepted) return BadRequest("This answer has already been accepted");
-        if (question.Answers.Any(a => a.Accepted))
+        if (question.HasAcceptedAnswer)
             return BadRequest("This question already has an accepted answer");
         
         answer.Accepted = true;
-        var questionAnswer = question.Answers.Find(a => a.Id.Equals(answerId));
-        questionAnswer?.Accepted = true;
+        question.HasAcceptedAnswer = true;
 
         await db.SaveChangesAsync();
         await bus.PublishAsync(new AnswerAccepted(questionId));
