@@ -117,7 +117,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
 
     [Authorize]
     [HttpPost("{questionId}/answers")]
-    public async Task<ActionResult<Answer>> CreateAnswer(string questionId, CreateAnswerDto dto)
+    public async Task<ActionResult<Answer>> PostAnswer(string questionId, CreateAnswerDto dto)
     {
         var question = await db.Questions
             .Include(q => q.Answers)
@@ -133,7 +133,6 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         {
             Content = dto.Content,
             QuestionId = question.Id,
-            Question =  question,
             UserDisplayName =  name,
             UserId = userId
         };
@@ -141,7 +140,6 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         question.Answers.Add(answer);
         question.AnswerCount = question.Answers.Count;
         
-        db.Answers.Add(answer);
         await db.SaveChangesAsync();
         await bus.PublishAsync(new AnswerCountUpdated(question.Id, question.Answers.Count));
         
