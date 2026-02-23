@@ -9,7 +9,7 @@ public class AnswerCountUpdatedHandler(ITypesenseClient client)
     {
         await client.UpdateDocument("questions", message.QuestionId, new
         {
-            AnswerCount = message.AnswerCount
+            message.AnswerCount
         });
     }
 }
