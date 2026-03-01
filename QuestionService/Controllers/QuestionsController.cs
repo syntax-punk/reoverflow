@@ -139,7 +139,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
         };
         
         question.Answers.Add(answer);
-        question.AnswerCount = question.AnswerCount++;
+        question.AnswerCount++;
         
         await db.SaveChangesAsync();
         await bus.PublishAsync(new AnswerCountUpdated(questionId, question.AnswerCount));
